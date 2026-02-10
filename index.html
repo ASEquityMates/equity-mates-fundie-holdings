@@ -406,7 +406,7 @@
         // ============================================
         // CONFIGURATION - REPLACE WITH YOUR SHEET URL
         // ============================================
-        const SHEET_URL = 'YOUR_PUBLISHED_GOOGLE_SHEET_URL_HERE';
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRVoyXyfmixkoIEwbAKAalz5dysPruvkWVL8EFy4OtOsX_1TRx-kqC5dmGv743v5DPnrFqx5j6LzkUv/pub?output=csv';
         
         // Category mapping to sheet tabs
         const CATEGORIES = {
@@ -425,7 +425,7 @@
         // Fetch data from Google Sheets
         async function fetchSheetData() {
             try {
-                if (SHEET_URL === 'YOUR_PUBLISHED_GOOGLE_SHEET_URL_HERE') {
+                if (SHEET_URL === 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRVoyXyfmixkoIEwbAKAalz5dysPruvkWVL8EFy4OtOsX_1TRx-kqC5dmGv743v5DPnrFqx5j6LzkUv/pub?output=csv') {
                     showSetupInstructions();
                     return;
                 }

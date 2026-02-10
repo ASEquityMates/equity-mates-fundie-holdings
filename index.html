@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Equity Mates Fund Holdings Analyser</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: sans-serif;
+            background: #18263b;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: #f15959;
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #ffffff;
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        .last-updated {
+            display: inline-block;
+            background: #ffffff;
+            color: #18263b;
+            padding: 8px 16px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            background: #f15959;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #ffffff;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(241, 89, 89, 0.3);
+            opacity: 0.7;
+        }
+
+        .tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(241, 89, 89, 0.5);
+            opacity: 0.9;
+        }
+
+        .tab.active {
+            background: #f15959;
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(241, 89, 89, 0.6);
+            opacity: 1;
+            font-weight: 600;
+        }
+
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #f15959;
+            font-size: 1.2rem;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f7fafc;
+            border-top-color: #f15959;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fff5f5;
+            border: 2px solid #f15959;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            color: #c53030;
+        }
+
+        .error h3 {
+            margin-bottom: 10px;
+            color: #f15959;
+        }
+
+        .actions-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 12px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #f15959;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: #f15959;
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(241, 89, 89, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(241, 89, 89, 0.4);
+            background: #d94545;
+        }
+
+        .btn-secondary {
+            background: #edf2f7;
+            color: #4a5568;
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .holdings-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .holdings-table th {
+            background: #18263b;
+            color: #ffffff;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #f15959;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .holdings-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #000000;
+        }
+
+        .holdings-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .stock-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            background: #f15959;
+            color: #ffffff;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .fund-count {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: #f15959;
+        }
+
+        .progress-bar {
+            width: 100px;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #f15959;
+            transition: width 0.3s ease;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: #f15959;
+            padding: 20px;
+            border-radius: 12px;
+            color: #ffffff;
+        }
+
+        .stat-card h3 {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-label {
+            color: #f15959;
+            font-weight: 500;
+        }
+
+        .filter-select {
+            padding: 10px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            cursor: pointer;
+        }
+
+        .expandable-row {
+            cursor: pointer;
+        }
+
+        .expanded-content {
+            background: #f7fafc;
+            padding: 15px;
+        }
+
+        .fund-list {
+            margin-top: 10px;
+            padding: 10px;
+            background: #ffffff;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #000000;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #718096;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #f15959;
+        }
+
+        .setup-banner {
+            background: #fffbeb;
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .setup-banner h3 {
+            color: #d97706;
+            margin-bottom: 10px;
+        }
+
+        .setup-banner ol {
+            margin-left: 20px;
+            color: #92400e;
+        }
+
+        .setup-banner li {
+            margin: 8px 0;
+        }
+
+        .setup-banner code {
+            background: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                width: 100%;
+            }
+            
+            .actions-bar {
+                flex-direction: column;
+            }
+            
+            .search-input {
+                width: 100%;
+            }
+
+            .holdings-table {
+                font-size: 0.9rem;
+            }
+
+            .holdings-table th,
+            .holdings-table td {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <div class="app-container">
+            <div class="header">
+                <h1>🏢 Equity Mates Fund Holdings Analyser</h1>
+                <p>Track and compare top holdings across Australian investment funds</p>
+                <span class="last-updated" id="lastUpdated">Loading...</span>
+            </div>
+            <div class="content-card">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading data from Google Sheets...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION - REPLACE WITH YOUR SHEET URL
+        // ============================================
+        const SHEET_URL = 'YOUR_PUBLISHED_GOOGLE_SHEET_URL_HERE';
+        
+        // Category mapping to sheet tabs
+        const CATEGORIES = {
+            smallCapAU: { name: 'Australian Small Cap', sheetName: 'Small Cap AU' },
+            largeCapAU: { name: 'Australian Large Cap', sheetName: 'Large Cap AU' },
+            largeCapGlobal: { name: 'Large Cap Global', sheetName: 'Large Cap Global' },
+            smallCapGlobal: { name: 'Small Cap Global', sheetName: 'Small Cap Global' }
+        };
+
+        let allData = {};
+        let activeTab = 'smallCapAU';
+        let searchTerm = '';
+        let minFunds = 1;
+        let expandedStock = null;
+
+        // Fetch data from Google Sheets
+        async function fetchSheetData() {
+            try {
+                if (SHEET_URL === 'YOUR_PUBLISHED_GOOGLE_SHEET_URL_HERE') {
+                    showSetupInstructions();
+                    return;
+                }
+
+                const response = await fetch(SHEET_URL);
+                const text = await response.text();
+                
+                // Parse CSV
+                const lines = text.split('\n');
+                const data = [];
+                
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    
+                    const parts = line.split(',').map(p => p.trim().replace(/^"|"$/g, ''));
+                    if (parts.length >= 4 && parts[0] && parts[1] && parts[2]) {
+                        data.push({
+                            category: parts[0],
+                            fundName: parts[1],
+                            stockCode: parts[2],
+                            stockName: parts[3] || parts[2],
+                            asOfDate: parts[4] || new Date().toISOString().split('T')[0]
+                        });
+                    }
+                }
+
+                // Group by category
+                allData = {
+                    smallCapAU: data.filter(d => d.category === 'Small Cap AU'),
+                    largeCapAU: data.filter(d => d.category === 'Large Cap AU'),
+                    largeCapGlobal: data.filter(d => d.category === 'Large Cap Global'),
+                    smallCapGlobal: data.filter(d => d.category === 'Small Cap Global')
+                };
+
+                renderApp();
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                showError(error);
+            }
+        }
+
+        function showSetupInstructions() {
+            const root = document.getElementById('root');
+            root.innerHTML = `
+                <div class="app-container">
+                    <div class="header">
+                        <h1>🏢 Equity Mates Fund Holdings Analyser</h1>
+                        <p>Track and compare top holdings across Australian investment funds</p>
+                    </div>
+                    <div class="content-card">
+                        <div class="setup-banner">
+                            <h3>⚙️ Setup Required</h3>
+                            <p><strong>Follow these steps to connect your Google Sheet:</strong></p>
+                            <ol>
+                                <li>Open the <strong>Google Sheet template</strong> (link in setup guide)</li>
+                                <li>Make a copy: <strong>File → Make a copy</strong></li>
+                                <li>Add your data to the sheet (see format below)</li>
+                                <li>Publish the sheet: <strong>File → Share → Publish to web</strong></li>
+                                <li>Choose <strong>"Entire Document"</strong> and <strong>"Comma-separated values (.csv)"</strong></li>
+                                <li>Click <strong>"Publish"</strong> and copy the URL</li>
+                                <li>Open <code>index.html</code> in a text editor</li>
+                                <li>Find line 278: <code>const SHEET_URL = 'YOUR_PUBLISHED...'</code></li>
+                                <li>Replace with your published sheet URL</li>
+                                <li>Save and re-upload to GitHub Pages</li>
+                            </ol>
+                            <br>
+                            <p><strong>Google Sheet Format:</strong></p>
+                            <p>Your sheet should have these columns (first row is header):</p>
+                            <code>Category | Fund | Ticker | Company | Date</code>
+                            <br><br>
+                            <p><strong>Example rows:</strong></p>
+                            <code>Small Cap AU, Ausbil, GDG, Generation Development Group, 2025-02-01</code><br>
+                            <code>Small Cap AU, Ausbil, GMD, Genesis Minerals, 2025-02-01</code><br>
+                            <code>Large Cap AU, Magellan, CBA, Commonwealth Bank, 2025-02-01</code>
+                            <br><br>
+                            <p><strong>Category values must be exactly:</strong></p>
+                            <ul>
+                                <li>Small Cap AU</li>
+                                <li>Large Cap AU</li>
+                                <li>Large Cap Global</li>
+                                <li>Small Cap Global</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showError(error) {
+            const root = document.getElementById('root');
+            root.innerHTML = `
+                <div class="app-container">
+                    <div class="header">
+                        <h1>🏢 Equity Mates Fund Holdings Analyser</h1>
+                        <p>Track and compare top holdings across Australian investment funds</p>
+                    </div>
+                    <div class="content-card">
+                        <div class="error">
+                            <h3>❌ Error Loading Data</h3>
+                            <p>${error.message}</p>
+                            <p><strong>Common issues:</strong></p>
+                            <ul>
+                                <li>Google Sheet URL not set correctly</li>
+                                <li>Sheet not published to web</li>
+                                <li>Sheet format incorrect (needs: Category, Fund, Ticker, Company, Date)</li>
+                                <li>CORS issue (sheet must be publicly accessible)</li>
+                            </ul>
+                            <br>
+                            <button class="btn btn-primary" onclick="location.reload()">🔄 Retry</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function calculateRankings(holdings) {
+            const stockMap = {};
+            
+            holdings.forEach(h => {
+                const key = h.stockCode.toUpperCase().trim();
+                if (!stockMap[key]) {
+                    stockMap[key] = {
+                        stockCode: h.stockCode,
+                        stockName: h.stockName,
+                        funds: new Set(),
+                        fundNames: []
+                    };
+                }
+                stockMap[key].funds.add(h.fundName);
+                if (!stockMap[key].fundNames.includes(h.fundName)) {
+                    stockMap[key].fundNames.push(h.fundName);
+                }
+            });
+
+            const uniqueFunds = new Set(holdings.map(h => h.fundName));
+            const totalFunds = uniqueFunds.size;
+
+            return Object.values(stockMap)
+                .map(stock => ({
+                    stockCode: stock.stockCode,
+                    stockName: stock.stockName,
+                    fundCount: stock.funds.size,
+                    percentage: totalFunds > 0 ? ((stock.funds.size / totalFunds) * 100).toFixed(1) : 0,
+                    funds: stock.fundNames,
+                    totalFunds
+                }))
+                .sort((a, b) => b.fundCount - a.fundCount);
+        }
+
+        function renderApp() {
+            const currentHoldings = allData[activeTab] || [];
+            const rankings = calculateRankings(currentHoldings);
+            
+            const filteredRankings = rankings.filter(r => {
+                const matchesSearch = !searchTerm || 
+                    r.stockCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    r.stockName.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesFilter = r.fundCount >= minFunds;
+                return matchesSearch && matchesFilter;
+            });
+
+            const uniqueFunds = [...new Set(currentHoldings.map(h => h.fundName))];
+            const totalStocks = rankings.length;
+
+            const root = document.getElementById('root');
+            root.innerHTML = `
+                <div class="app-container">
+                    <div class="header">
+                        <h1>🏢 Equity Mates Fund Holdings Analyser</h1>
+                        <p>Track and compare top holdings across Australian investment funds</p>
+                        <span class="last-updated">Last updated: ${new Date().toLocaleDateString()}</span>
+                    </div>
+
+                    <div class="tabs">
+                        ${Object.entries(CATEGORIES).map(([key, cat]) => `
+                            <button 
+                                class="tab ${activeTab === key ? 'active' : ''}" 
+                                onclick="changeTab('${key}')"
+                            >
+                                ${cat.name}
+                            </button>
+                        `).join('')}
+                    </div>
+
+                    <div class="content-card">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <h3>Total Funds</h3>
+                                <p>${uniqueFunds.length}</p>
+                            </div>
+                            <div class="stat-card">
+                                <h3>Unique Stocks</h3>
+                                <p>${totalStocks}</p>
+                            </div>
+                            <div class="stat-card">
+                                <h3>Total Holdings</h3>
+                                <p>${currentHoldings.length}</p>
+                            </div>
+                        </div>
+
+                        <div class="actions-bar">
+                            <input
+                                type="text"
+                                class="search-input"
+                                placeholder="🔍 Search stocks by code or name..."
+                                value="${searchTerm}"
+                                oninput="handleSearch(this.value)"
+                            />
+                            
+                            <div class="filter-section">
+                                <span class="filter-label">Min funds:</span>
+                                <select 
+                                    class="filter-select"
+                                    value="${minFunds}"
+                                    onchange="handleFilter(this.value)"
+                                >
+                                    <option value="1">1+</option>
+                                    <option value="2">2+</option>
+                                    <option value="3">3+</option>
+                                    <option value="5">5+</option>
+                                    <option value="7">7+</option>
+                                </select>
+                            </div>
+
+                            <a 
+                                href="https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/edit" 
+                                target="_blank"
+                                class="btn btn-primary"
+                            >
+                                📝 Edit Sheet
+                            </a>
+                            <button class="btn btn-secondary" onclick="fetchSheetData()">
+                                🔄 Refresh Data
+                            </button>
+                        </div>
+
+                        ${filteredRankings.length === 0 ? `
+                            <div class="empty-state">
+                                <h3>No data yet</h3>
+                                <p>Add holdings to your Google Sheet to see rankings here</p>
+                            </div>
+                        ` : `
+                            <table class="holdings-table">
+                                <thead>
+                                    <tr>
+                                        <th>Stock Code</th>
+                                        <th>Stock Name</th>
+                                        <th>Held By</th>
+                                        <th>% of Funds</th>
+                                        <th>Coverage</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${filteredRankings.map(rank => `
+                                        <tr class="expandable-row" onclick="toggleExpand('${rank.stockCode}')">
+                                            <td><span class="stock-badge">${rank.stockCode}</span></td>
+                                            <td>${rank.stockName}</td>
+                                            <td>
+                                                <span class="fund-count">
+                                                    ${rank.fundCount} / ${rank.totalFunds} funds
+                                                </span>
+                                            </td>
+                                            <td>${rank.percentage}%</td>
+                                            <td>
+                                                <div class="progress-bar">
+                                                    <div 
+                                                        class="progress-fill" 
+                                                        style="width: ${rank.percentage}%"
+                                                    ></div>
+                                                </div>
+                                            </td>
+                                            <td style="color: #f15959; cursor: pointer;">
+                                                ${expandedStock === rank.stockCode ? '▼' : '▶'}
+                                            </td>
+                                        </tr>
+                                        ${expandedStock === rank.stockCode ? `
+                                            <tr>
+                                                <td colspan="6">
+                                                    <div class="expanded-content">
+                                                        <strong>Funds holding ${rank.stockCode}:</strong>
+                                                        <div class="fund-list">
+                                                            ${rank.funds.join(', ')}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ` : ''}
+                                    `).join('')}
+                                </tbody>
+                            </table>
+
+                            <div style="margin-top: 30px; padding: 20px; background: #f7fafc; border-radius: 12px;">
+                                <h3 style="margin-bottom: 15px; color: #f15959;">
+                                    Funds Included (${uniqueFunds.length})
+                                </h3>
+                                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                                    ${uniqueFunds.map(fund => `
+                                        <span style="
+                                            padding: 8px 15px;
+                                            background: white;
+                                            border-radius: 8px;
+                                            font-size: 0.9rem;
+                                            color: #000000;
+                                            border: 2px solid #f15959;
+                                        ">
+                                            ${fund}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        function changeTab(tab) {
+            activeTab = tab;
+            renderApp();
+        }
+
+        function handleSearch(value) {
+            searchTerm = value;
+            renderApp();
+        }
+
+        function handleFilter(value) {
+            minFunds = parseInt(value);
+            renderApp();
+        }
+
+        function toggleExpand(stockCode) {
+            expandedStock = expandedStock === stockCode ? null : stockCode;
+            renderApp();
+        }
+
+        // Initialize
+        fetchSheetData();
+    </script>
+</body>
+</html>
